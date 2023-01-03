@@ -1,0 +1,13 @@
+<?xml version="1.0"?>
+<launch>
+  <arg name="serverIP" default="192.168.0.244" />
+  <arg name="clientIP" default="192.168.0.184" />
+  <arg name="multicastAddress" default="224.0.0.1" />
+
+  <arg name="pub_rigid_body" default="true" />
+  <arg name="pub_rigid_body_marker" default="true" />
+  <arg name="pub_individual_marker" default="false" />
+  <arg name="pub_pointcloud" default="false" />
+
+  <include file="$(find natnet_ros)/launch/natnet_ros.launch" pass_all_args="true" />
+</launch>
