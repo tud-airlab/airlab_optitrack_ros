@@ -7,28 +7,37 @@ from nav_msgs.msg import Odometry
 
 class Optitracker:
     def __init__(self):
+        rospy.init_node(name="optitrack_state_estimator")
 
         self.trace = deque(maxlen=20)
 
         self.pose = PoseStamped()
-        rospy.Subscriber('/natnet_ros_cpp/pose', PoseStamped, self.cb, queue_size=1)
+        rospy.Subscriber('/natnet_ros/Heijn/pose', PoseStamped, self.cb, queue_size=1)
         self.pub = rospy.Publisher('~state', Odometry, queue_size=10)
 
     def cb(self, msg):
         self.trace.append(msg)
 
-        state = np.matrix([[msg.position.x], [0], [msg.position.y], [0]])
-        if self.first_pose:
-            self.KF = KalmanFilter(init_state=state, frequency=100)
+        if len(self.trace) <= 1:
+            init_state = np.matrix([[msg.pose.position.x], [0], [msg.pose.position.y], [0]])
+            self.KF = KalmanFilter(
+                init_state=init_state, 
+                frequency=30,
+                measurement_variance=0.000001,
+                state_variance=0.01
+            )
         else:
-            self.KF.correct(state.reshape(2, 1))
+            measurement = np.matrix([[msg.pose.position.x], [msg.pose.position.y]])
+            self.KF.predict()
+            self.KF.correct(measurement)
+            # print(self.KF.pred_state)
 
         filtered_state_msg = Odometry()
-
-        filtered_state_msg.pose.position.x = self.KF.pred_state[0, 0]
-        filtered_state_msg.pose.position.y = self.KF.pred_state[2, 0]
-        filtered_state_msg.twist.linear.x = self.KF.pred_state[1, 0]
-        filtered_state_msg.twist.linear.y = self.KF.pred_state[3, 0]
+        filtered_state_msg.header = msg.header
+        filtered_state_msg.pose.pose.position.x = self.KF.pred_state[0, 0]
+        filtered_state_msg.pose.pose.position.y = self.KF.pred_state[2, 0]
+        filtered_state_msg.twist.twist.linear.x = self.KF.pred_state[1, 0]
+        filtered_state_msg.twist.twist.linear.y = self.KF.pred_state[3, 0]
 
         self.pub.publish(filtered_state_msg)
 
@@ -92,4 +101,5 @@ class KalmanFilter:
 
 if __name__ == '__main__':
     Optitracker()
+    rospy.spin()
 
