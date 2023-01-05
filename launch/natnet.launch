@@ -9,5 +9,5 @@
   <arg name="pub_individual_marker" default="false" />
   <arg name="pub_pointcloud" default="false" />
 
-  <include file="$(find natnet_ros)/launch/natnet_ros.launch" pass_all_args="true" />
+  <include file="$(find natnet_ros_cpp)/launch/natnet_ros.launch" pass_all_args="true" />
 </launch>
