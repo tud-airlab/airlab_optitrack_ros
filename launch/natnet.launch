@@ -10,4 +10,5 @@
   <arg name="pub_pointcloud" default="false" />
 
   <include file="$(find natnet_ros_cpp)/launch/natnet_ros.launch" pass_all_args="true" />
+  <node name="optitrack_state_estimator" type="state_estimator.py" pkg="airlab_optitrack_ros" output="screen"/>
 </launch>

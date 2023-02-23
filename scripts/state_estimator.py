@@ -1,45 +1,60 @@
+#!/bin/python3
 import numpy as np
 import rospy
 from collections import deque
-from geometry_msgs.msg import PoseStamped
+from geometry_msgs.msg import PoseStamped, Quaternion
 from nav_msgs.msg import Odometry
+from tf.transformations import euler_from_quaternion
 
+# Helpers
+def _it(self):
+    yield self.x
+    yield self.y
+    yield self.z
+    yield self.w
+Quaternion.__iter__ = _it
 
 class Optitracker:
-    def __init__(self):
-        rospy.init_node(name="optitrack_state_estimator")
-
+    def __init__(self, asset_name):
         self.trace = deque(maxlen=20)
+        self.frequency = 30
 
         self.pose = PoseStamped()
-        rospy.Subscriber('/natnet_ros/Heijn/pose', PoseStamped, self.cb, queue_size=1)
-        self.pub = rospy.Publisher('~state', Odometry, queue_size=10)
+        rospy.Subscriber(f'/natnet_ros/{asset_name}/pose', PoseStamped, self.cb, queue_size=1)
+        self.pub = rospy.Publisher(f'optitrack_state_estimator/{asset_name}/state', Odometry, queue_size=10)
 
     def cb(self, msg):
         self.trace.append(msg)
 
-        if len(self.trace) <= 1:
-            init_state = np.matrix([[msg.pose.position.x], [0], [msg.pose.position.y], [0]])
-            self.KF = KalmanFilter(
-                init_state=init_state, 
-                frequency=30,
-                measurement_variance=0.000001,
-                state_variance=0.01
-            )
-        else:
-            measurement = np.matrix([[msg.pose.position.x], [msg.pose.position.y]])
-            self.KF.predict()
-            self.KF.correct(measurement)
+        # if len(self.trace) <= 1:
+        #     init_state = np.matrix([[msg.pose.position.x], [0], [msg.pose.position.y], [0]])
+        #     self.KF = KalmanFilter(
+        #         init_state=init_state, 
+        #         frequency=self.frequency,
+        #         measurement_variance=0.000001,
+        #         state_variance=0.10
+        #     )
+        #     return
+        # else:
+        #     measurement = np.matrix([[msg.pose.position.x], [msg.pose.position.y]])
+        #     self.KF.predict()
+        #     self.KF.correct(measurement)
             # print(self.KF.pred_state)
 
+        if len(self.trace) <= 1:
+            return 
         filtered_state_msg = Odometry()
         filtered_state_msg.header = msg.header
-        filtered_state_msg.pose.pose.position.x = self.KF.pred_state[0, 0]
-        filtered_state_msg.pose.pose.position.y = self.KF.pred_state[2, 0]
-        filtered_state_msg.twist.twist.linear.x = self.KF.pred_state[1, 0]
-        filtered_state_msg.twist.twist.linear.y = self.KF.pred_state[3, 0]
+        filtered_state_msg.pose.pose = self.trace[-1].pose
+        filtered_state_msg.twist.twist.linear.x = (self.trace[-1].pose.position.x - self.trace[-2].pose.position.x)*self.frequency 
+        filtered_state_msg.twist.twist.linear.y = (self.trace[-1].pose.position.y - self.trace[-2].pose.position.y)*self.frequency 
+        filtered_state_msg.twist.twist.angular.z = (self._to_yaw(self.trace[-1].pose.orientation) - self._to_yaw(self.trace[-2].pose.orientation))*self.frequency 
 
         self.pub.publish(filtered_state_msg)
+
+    def _to_yaw(self, quat):
+        _, _, yaw = euler_from_quaternion(list(quat))
+        return yaw 
 
 
 class KalmanFilter:
@@ -100,6 +115,8 @@ class KalmanFilter:
 
 
 if __name__ == '__main__':
-    Optitracker()
+    rospy.init_node(name=f"optitrack_state_estimator")
+    Optitracker(asset_name='Heijn')
+    Optitracker(asset_name='Crate')
     rospy.spin()
 
