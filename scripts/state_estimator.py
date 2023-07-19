@@ -1,4 +1,4 @@
-#!/usr/bin/env python3
+#!/usr/bin/env python
 import numpy as np
 import rospy
 from collections import deque
@@ -20,8 +20,8 @@ class Optitracker:
         self.frequency = 30
 
         self.pose = PoseStamped()
-        rospy.Subscriber(f'/natnet_ros/{asset_name}/pose', PoseStamped, self.cb, queue_size=1)
-        self.pub = rospy.Publisher(f'optitrack_state_estimator/{asset_name}/state', Odometry, queue_size=10)
+        rospy.Subscriber('/natnet_ros/'+asset_name+'/pose', PoseStamped, self.cb, queue_size=1)
+        self.pub = rospy.Publisher('optitrack_state_estimator'+asset_name+'state', Odometry, queue_size=10)
 
     def cb(self, msg):
         self.trace.append(msg)
