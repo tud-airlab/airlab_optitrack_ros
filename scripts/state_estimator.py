@@ -61,7 +61,7 @@ class KalmanFilter:
     def __init__(
         self,
         init_state,
-        frequency
+        frequency,
         state_variance = 0.01,
         measurement_variance = 0.01,
         method = 'velocity'
