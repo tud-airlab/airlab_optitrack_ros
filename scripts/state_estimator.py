@@ -21,7 +21,7 @@ class Optitracker:
 
         self.pose = PoseStamped()
         rospy.Subscriber('/natnet_ros/'+asset_name+'/pose', PoseStamped, self.cb, queue_size=1)
-        self.pub = rospy.Publisher('optitrack_state_estimator'+asset_name+'state', Odometry, queue_size=10)
+        self.pub = rospy.Publisher('optitrack_state_estimator/'+asset_name+'/state', Odometry, queue_size=10)
 
     def cb(self, msg):
         self.trace.append(msg)
