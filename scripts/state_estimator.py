@@ -115,7 +115,7 @@ class KalmanFilter:
 
 
 if __name__ == '__main__':
-    rospy.init_node(name=f"optitrack_state_estimator")
+    rospy.init_node(name="optitrack_state_estimator")
     Optitracker(asset_name='Heijn')
     Optitracker(asset_name='Crate')
     rospy.spin()
