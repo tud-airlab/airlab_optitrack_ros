@@ -61,10 +61,10 @@ class KalmanFilter:
     def __init__(
         self,
         init_state,
-        frequency: float,
-        state_variance: float = 0.01,
-        measurement_variance: float = 0.01,
-        method: str = 'velocity'
+        frequency
+        state_variance = 0.01,
+        measurement_variance = 0.01,
+        method = 'velocity'
     ):
         self.stateVariance = state_variance
         self.measurementVariance = measurement_variance
